@@ -43,7 +43,6 @@ parent = np.empty_like(root)
 parent[:] = maze
 
 q = queue.PriorityQueue()
-firstHeuristic = np.inf
 newHeuristc = heuristic(temp, target, count)
 move = np.array([])
 
@@ -92,7 +91,6 @@ def main():
     cost = 0
     minH = 20
     while minH-cost != 0:
-
         heuristicList = []
         cost += 1
         move = np.array([[x, y]])
@@ -100,11 +98,11 @@ def main():
         expand(heuristicList, temp, cost)
 
         maze[:] = temp
-
         minH = np.min(heuristicList)
         posMin = np.where(heuristicList == minH)
         heuristicList = []
         print(maze, '\n')
+
         if (posMin[0].size > 1):
             oldNeighbors = neighbours
             cost += 1
