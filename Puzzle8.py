@@ -4,15 +4,18 @@ import queue
 col = 3
 row = 3
 count = 0
-
-visited = []
+minH = 20
+posMin = 0
 temp = []
+posMinList = []
+minList = []
+heuristicList = []
 
 
 root = np.array([
-    [2, 8, 3],
-    [1, -1, 4],
-    [7, 6, 5]
+    [1, 2, 3],
+    [6, -1, 4],
+    [8, 7, 5]
 ])
 target = np.array([
     [1, 2, 3],
@@ -60,15 +63,14 @@ def neighbour(x, y, col):
     return allNeighbours
 
 
-def expand(heuristicList, temp, cost):
-    global neighbours, x, y, maze, visited, newHeuristc
-
+def expand(temp, cost):
+    global neighbours, x, y, maze, newHeuristc, minH, posMin, move
     empty = np.where(temp == -1)
     x = int(empty[1])
     y = int(empty[0])
     neighbours = neighbour(x, y, col)
 
-    if move.size != 0:
+    if move.size > 0:
         sizeN = len(neighbours)
         for i in range(len(neighbours)):
             if len(neighbours) == sizeN:
@@ -80,68 +82,62 @@ def expand(heuristicList, temp, cost):
         mazeY = neighbours[i][0]
         maze[mazeX][mazeY] = temp[y][x]
         maze[y][x] = temp[mazeX][mazeY]
-        visited.append(maze[y][x])
-        newHeuristc = heuristic(maze, target, count)
-        newHeuristc = newHeuristc + cost
+        newHeuristc = heuristic(maze, target, count) + cost
         heuristicList.append(newHeuristc)
+
+    maze[:] = temp
+    minH = np.min(heuristicList)
+    posMin = np.where(heuristicList == minH)
 
 
 def main():
-    global move
+    global move, minH, posMin, heuristicList, neighbours, x, y
     cost = 0
-    minH = 20
+    firstHeuristic = heuristic(maze, target, count)
+    if(firstHeuristic == 0):
+        exit(0)
     while minH-cost != 0:
-        heuristicList = []
         cost += 1
-        move = np.array([[x, y]])
-
-        expand(heuristicList, temp, cost)
-
-        maze[:] = temp
-        minH = np.min(heuristicList)
-        posMin = np.where(heuristicList == minH)
+        if(cost == 1):
+            move = np.array([[x-1, y-1]])
+        else:
+            move = np.array([[x, y]])
+        expand(temp, cost)
         heuristicList = []
+
         print(maze, '\n')
 
         if (posMin[0].size > 1):
             oldNeighbors = neighbours
-            cost += 1
             parent[:] = temp
-            mazeX = neighbours[int(posMin[0][0])][1]
-            mazeY = neighbours[int(posMin[0][0])][0]
-            temp[mazeX][mazeY] = maze[y][x]
-            temp[y][x] = maze[mazeX][mazeY]
-            move = np.array([[x, y]])
-            expand(heuristicList, temp, cost)
-            tempHeuristicList = heuristicList
-            tempMinH = np.min(tempHeuristicList)
-            tempMinPo = np.where(tempHeuristicList == tempMinH)
-            heuristicList = []
-            temp[:] = parent
-            mazeX = oldNeighbors[int(posMin[0][1])][1]
-            mazeY = oldNeighbors[int(posMin[0][1])][0]
-            empty = np.where(parent == -1)
-            j = int(empty[1])
-            k = int(empty[0])
-            temp[mazeX][mazeY] = parent[j][k]
-            temp[j][k] = parent[mazeX][mazeY]
             maze[:] = temp
-            move = np.array([[j, k]])
-            expand(heuristicList, temp, cost)
-            minH = np.min(heuristicList)
-            posMin = np.where(heuristicList == minH)
-            maze[:] = temp
-            print(maze, '\n')
-            if (minH < tempMinH):
-                mazeX = neighbours[int(posMin[0])][1]
-                mazeY = neighbours[int(posMin[0])][0]
-                temp[mazeX][mazeY] = maze[y][x]
-                temp[y][x] = maze[mazeX][mazeY]
-            else:
-                mazeX = neighbours[int(tempMinPo[0])][1]
-                mazeY = neighbours[int(tempMinPo[0])][0]
-                temp[mazeX][mazeY] = maze[y][x]
-                temp[y][x] = maze[mazeX][mazeY]
+            tempPosMin = posMin
+            for i in range(tempPosMin[0].size):
+                empty = np.where(temp == -1)
+                j = int(empty[1])
+                k = int(empty[0])
+                mazeX = oldNeighbors[int(tempPosMin[0][i])][1]
+                mazeY = oldNeighbors[int(tempPosMin[0][i])][0]
+                temp[mazeX][mazeY] = maze[k][j]
+                temp[k][j] = maze[mazeX][mazeY]
+                if(i == 0):
+                    move = np.array([[j, k]])
+                expand(temp, cost)
+                minH = np.min(heuristicList)
+                minList.append(minH)
+                posMinList.append(posMin[0][0])
+                heuristicList = []
+                temp[:] = parent
+                maze[:] = parent
+            minH = np.min(minList)
+            posMin = np.where(minList == minH)
+            posNeigh = tempPosMin[0][int(posMin[0][0])]
+
+            mazeX = oldNeighbors[posNeigh][1]
+            mazeY = oldNeighbors[posNeigh][0]
+            temp[mazeX][mazeY] = maze[k][j]
+            temp[k][j] = maze[mazeX][mazeY]
+
         else:
             mazeX = neighbours[int(posMin[0])][1]
             mazeY = neighbours[int(posMin[0])][0]
