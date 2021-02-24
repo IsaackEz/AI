@@ -1,0 +1,2 @@
+# AI
+## Activities and HW
