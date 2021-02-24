@@ -4,9 +4,9 @@ from copy import deepcopy
 COL = 3
 ROW = 3
 
-START = [[1, 2, 3],
-         [6, 0, 4],
-         [8, 7, 5]]
+START = [[1, 5, 3],
+         [6, 2, 4],
+         [8, 7, 0]]
 
 END = [[1, 2, 3],
        [8, 0, 4],
