@@ -1,16 +1,27 @@
 import numpy as np
 from copy import deepcopy
 
-COL = 3
-ROW = 3
+COL = 5
+ROW = 5
 
-START = [[1, 5, 3],
-         [6, 2, 4],
-         [8, 7, 0]]
+START = [[0, 0, 0, 0, 0],
+         [0, 1, 0, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0]]
 
-END = [[1, 2, 3],
-       [8, 0, 4],
-       [7, 6, 5]]
+END = [[0, 0, 0, 0, 0],
+       [0, 0, 0, 0, 0],
+       [0, 0, 0, 0, 0],
+       [0, 0, 0, 0, 0],
+       [0, 0, 0, 1, 0]]
+
+best = {}
+
+void = 1
+for i in range(len(END)):
+    if void in END[i]:
+        posGoal = (i, END[i].index(void))
 
 
 class Node:
@@ -37,23 +48,24 @@ def printPath(bestVisited):  # Print the final path
     for i in range(len(path)):
         print(path[i][0])
         print(path[i][1])
-        print(path[i][2], '\n')
+        print(path[i][2])
+        print(path[i][3])
+        print(path[i][4], '\n')
 
 
-def heuristic(current):  # Get the heuristic of the current neighbour by checking every position
+def heuristicF(current):
     count = 0
-    for i in range(COL):
-        for j in range(ROW):
-            if(current[i][j] != END[i][j]):
-                count += 1
-            if(current[i][j] == 0 & END[i][j] == 0):
-                count += 1
-    count = count - 1
+    posEmpty = pos(current)
+    x = posEmpty[0]  # Saving it as coordinates(x,y)
+    y = posEmpty[1]
+    xE = posGoal[0]
+    yE = posGoal[1]
+    count = abs(x-yE) + abs(xE-y)
     return count
 
 
 def pos(current):  # Look for the position of the current node
-    void = 0
+    void = 1
     for i in range(len(current)):
         if void in current[i]:
             return (i, current[i].index(void))
@@ -69,7 +81,7 @@ def expand(bestPuzzle):  # Take the best puzzle yet
     # Look all the neighbours that the empty has
     allNeighbours = np.array([[x-1, y], [x+1, y], [x, y-1], [x, y+1]])
     # If there is overflow take their position
-    notNeighbour = np.where((allNeighbours == -1) | (allNeighbours == 3))
+    notNeighbour = np.where((allNeighbours == -1) | (allNeighbours == COL))
     if len(notNeighbour[0]) == 2:  # If there is 2 neigbours overflowed
         # Delete the one on position 0 0
         allNeighbours = np.delete(allNeighbours, notNeighbour[0][0], 0)
@@ -85,9 +97,9 @@ def expand(bestPuzzle):  # Take the best puzzle yet
         newNeighbour = deepcopy(bestPuzzle.current)  # Copy the current best
         # Pass the number that the best has to the neighbour (we move)
         newNeighbour[x][y] = bestPuzzle.current[currentX][currentY]
-        newNeighbour[currentX][currentY] = 0  # Finish the move
+        newNeighbour[currentX][currentY] = 1  # Finish the move
         neighboursList.append(Node(
-            newNeighbour, bestPuzzle.current, bestPuzzle.cost + 1, heuristic(newNeighbour), 'yes'))  # Append that node to the list, marked as 'yes' because we move
+            newNeighbour, bestPuzzle.current, bestPuzzle.cost + 1, heuristicF(newNeighbour), 'yes'))  # Append that node to the list, marked as 'yes' because we move
     return neighboursList
 
 
@@ -104,7 +116,7 @@ def bestNode(puzzle):  # Get the bestNode yet
 
 def main(start):  # Main function
     # Set the puzzle to the starting node
-    puzzle = {str(start): Node(start, start, 0, heuristic(start), '')}
+    puzzle = {str(start): Node(start, start, 0, heuristicF(start), '')}
     bestVisited = {}  # Dictionary of the best nodes visited
     while True:
 
