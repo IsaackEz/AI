@@ -22,11 +22,11 @@ pos = {'A': (1, 5), 'B': (3, 5), 'C': (0, 2), 'D': (4, 2), 'E': (2, 0)}
 infinite = np.inf
 COL = 5
 ROW = 5
-adjList = np.array([[infinite, 20, 30, 10, 11],
-                    [15, infinite, 16, 4, 2],
-                    [3, 5, infinite, 2, 4],
-                    [19, 6, 18, infinite, 3],
-                    [16, 4, 7, 16, infinite]])
+refAdjList = np.array([[infinite, 20, 30, 10, 11],
+                       [15, infinite, 16, 4, 2],
+                       [3, 5, infinite, 2, 4],
+                       [19, 6, 18, infinite, 3],
+                       [16, 4, 7, 16, infinite]])
 
 
 class Node:
@@ -38,25 +38,27 @@ class Node:
 
 
 def redu(matrix):
-    rowMin = np.amin(matrix.current, axis=1)
+    rowMin = np.amin(matrix, axis=1)
+    rowMin[rowMin == infinite] = 0
 
     for i in range(COL):
-        matrix.current[i, :] = np.subtract(
-            matrix.current[i][:], rowMin[i])
+        matrix[i, :] = np.subtract(
+            matrix[i][:], rowMin[i])
 
-    colMin = np.amin(matrix.current, axis=0)
+    colMin = np.amin(matrix, axis=0)
+    colMin[colMin == infinite] = 0
 
     for i in range(COL):
-        matrix.current[:, i] = np.subtract(
-            matrix.current[:, i], colMin[i])
-    bG = np.sum(rowMin + colMin)
-    return rowMin, colMin, bG
+        matrix[:, i] = np.subtract(
+            matrix[:, i], colMin[i])
+
+    return rowMin, colMin
 
 
-def BnB(adjList):
+def BnB(adjList, visited):
     cont = 0
     for i in range(COL):
-        if((adjList[:, i] == 0).any() or (adjList[:, i] == infinite).any() and (adjList[i, :] == 0).any() or (adjList[i, :] == infinite).any()):
+        if(((adjList[:, i] == 0).any() or (adjList[:, i] == infinite).all()) and ((adjList[i, :] == 0).any() or (adjList[i, :] == infinite).all())):
             cont += 1
     if(cont == COL):
         print("Matrix reduced")
@@ -67,48 +69,61 @@ def BnB(adjList):
 
 def bestN(matrix):
     bestFn = 0
+    ind = 0
     firstIt = True
     for node in matrix.values():
+        ind += 1
         # If there bestFn is greater than f(n) of the current node or is just the first iteration
         if firstIt or node.cost < bestFn:
             firstIt = False
             best = node
             bestFn = best.cost
-    return best
+    ind -= 1
+    return best, ind
 
 
 def main(start):
 
     matrix = {str(start): Node(start, start, 0, '')}
+    minMax = redu(start)
+    b = np.sum(minMax[0] + minMax[1])
     bestNodeV = {}
-    c = 0
-    j = 0
-    bestList = []
+    visited = np.array([0, 0, 0, 0])
     while True:
+        bestList = []
 
+        nodesL = [0, 1, 2, 3, 4]
+        # visited = np.append(visited, 0)
         bestNode = bestN(matrix)
-        bestNodeV[str(bestNode.current)] = bestNode
+        visited = np.insert(visited, 0, bestNode[1])
+        bestNodeV[str(bestNode[0].current)] = bestNode[0]
+        minMax = redu(bestNode[0].current)
 
-        minMax = redu(bestNode)
+        nodesL = (list(set(nodesL) - set(visited)))
 
-        b = np.sum(minMax[0] + minMax[1])
-
-        for i in range(COL-1):
-            adjList = deepcopy(bestNode.current)
-            adjList[c, :] = infinite
-            adjList[:, i+1] = infinite
-            adjList[j+1][c] = infinite
-            reduced = BnB(adjList)
+        for j in range(len(nodesL)):
+            adjList = deepcopy(bestNode[0].current)
+            adjList[visited[0], :] = infinite
+            adjList[:, nodesL[j]] = infinite
+            adjList[nodesL[j]][visited[0]] = infinite
+            reduced = BnB(adjList, visited)
             if(reduced == True):
-                cost = bestNode.current[c][j+1] + b + minMax[2]
-                bestList.append(Node(adjList, bestNode.previous, cost, 'yes'))
-                j += 1
+                cost = bestNode[0].current[visited[0]][nodesL[j]] + b
+                bestList.append(
+                    Node(adjList, bestNode[0].previous, cost, 'yes'))
+
             else:
-                redu(adjList)
-                cost = bestNode[c][j+1] + b + minMax[2]
+                minMax = redu(adjList)
+                bG = np.sum(minMax[0] + minMax[1])
+                cost = bestNode[0].current[visited[0]][nodesL[j]] + b + bG
+                bestList.append(
+                    Node(adjList, bestNode[0].previous, cost, 'yes'))
+        matrix = {}
+        for bestL in bestList:
+            matrix[str(bestL.current)] = bestL
 
 
-main(adjList)
+main(refAdjList)
 # nodes
 nx.draw_networkx_nodes(G, pos, node_size=700)
 
