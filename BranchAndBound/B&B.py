@@ -152,12 +152,11 @@ if __name__ == '__main__':
                            [16, 4, 7, 16, infinite]])
 
     path = main(refAdjList)
+    print('Shortest path from A: ', path)
 
     esmall = []
     for i in range(len(path)-1):
         esmall.append((path[i], path[i+1]))
-
-    pos = nx.spring_layout(G)  # positions for all nodes
 
     # nodes
     nx.draw_networkx_nodes(G, pos, node_size=700)
