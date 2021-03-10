@@ -4,36 +4,38 @@ import numpy as np
 from copy import deepcopy
 
 
-class Node:
+class Node:  # Class containing the cost and the matrix of the current node
     def __init__(self, current, cost):
         self.current = current
         self.cost = cost
 
 
 def redu(matrix):
-    rowMin = np.amin(matrix, axis=1)
+    rowMin = np.amin(matrix, axis=1)  # Get the min of the rows
+    # If the entire row is infinite, set to zero
     rowMin[rowMin == infinite] = 0
 
     for i in range(COL):
-        matrix[i, :] = np.subtract(
+        matrix[i, :] = np.subtract(  # Substract the min with the matrix
             matrix[i][:], rowMin[i])
 
-    colMin = np.amin(matrix, axis=0)
+    colMin = np.amin(matrix, axis=0)  # Get the max of the columns
+    # If the entire column is infinite, set to zero
     colMin[colMin == infinite] = 0
 
     for i in range(COL):
-        matrix[:, i] = np.subtract(
+        matrix[:, i] = np.subtract(  # Substract the min with the matrix
             matrix[:, i], colMin[i])
 
     return rowMin, colMin
 
 
-def BnB(adjList, visited):
+def BnB(adjList):
     cont = 0
-    for i in range(COL):
+    for i in range(COL):  # Checks if the matrix is reduced
         if(((adjList[:, i] == 0).any() or (adjList[:, i] == infinite).all()) and ((adjList[i, :] == 0).any() or (adjList[i, :] == infinite).all())):
             cont += 1
-    if(cont == COL):
+    if(cont == COL):  # if all columns and rows have a 0 True, else False
         return True
     else:
         return False
@@ -41,25 +43,23 @@ def BnB(adjList, visited):
 
 def bestN(matrix):
     bestFn = 0
-    ind = 0
     firstIt = True
     for node in matrix.values():
-        if firstIt or node.cost < bestFn:
-            ind += 1
+        if firstIt or node.cost < bestFn:  # Get the best node of the list we got
             firstIt = False
             best = node
             bestFn = best.cost
-    return best, ind
+    return best
 
 
 def getPath(visited):
     path = []
     label = []
     for i in range(COL):
-        path.append(visited[i])
-    path.reverse()
+        path.append(visited[i])  # Get the path from the visited list
+    path.reverse()  # Reverse the path
 
-    for i in range(len(path)):
+    for i in range(len(path)):  # Set the corresponding letter to each position
         if path[i] == 0:
             label.append('A')
         elif path[i] == 1:
@@ -75,57 +75,68 @@ def getPath(visited):
 
 def main(start):
 
-    matrix = {str(start): Node(start, 0)}
-    first = True
+    matrix = {str(start): Node(start, 0)}  # First matrix
+    first = True  # First iteration
     bestList = []
     visited = np.array([0, 0, 0, 0])
     nodesL = [0, 1, 2, 3, 4]
     while True:
-
-        bestNode = bestN(matrix)
-        minMax = redu(bestNode[0].current)
-        if(first):
-            b = np.sum(minMax[0] + minMax[1])
+        bestNode = bestN(matrix)  # Asign to bestNode the lowest cost
+        minMax = redu(bestNode.current)  # Reduce the best
+        if(first):  # If is the first iteration
+            b = np.sum(minMax[0] + minMax[1])  # b is the sum of max and min
             index = 0
         else:
-            b = bestNode[0].cost
+            b = bestNode.cost  # b will be the cost of the new best
             for i in range(len(bestList)):
-                if (bestList[i].cost == bestNode[0].cost):
-                    index = i
+                # if the cost is the same ass the one on the list
+                if (bestList[i].cost == bestNode.cost):
+                    index = i  # Get the index
 
+        # Set the position as visited in the first position
         visited = np.insert(visited, 0, nodesL[index])
+        # remove the visited from the list
         nodesL = (list(set(nodesL) - set(visited)))
-        if(not nodesL):
-            path = getPath(visited)
+        if(not nodesL):  # If is empty
+            path = getPath(visited)  # Get the path
             return path
         bestList = []
         for j in range(len(nodesL)):
-            adjList = deepcopy(bestNode[0].current)
+            # Copy the current best to adjList
+            adjList = deepcopy(bestNode.current)
+            # Set the entire row of the node visited to infinite
             adjList[visited[0], :] = infinite
+            # Set the entire column of the 'neighbor' to infinite
             adjList[:, nodesL[j]] = infinite
+            # Set the cell of the visited node and the neighbor to infinite
             adjList[nodesL[j]][visited[0]] = infinite
+            # Set the previous cell to infinite
             adjList[nodesL[j]][visited[1]] = infinite
-            reduced = BnB(adjList, visited)
+            reduced = BnB(adjList)  # Reduce the matrix
 
-            if(reduced == True):
-                cost = bestNode[0].current[visited[0]][nodesL[j]] + b
+            if(reduced == True):  # If it is reduced
+                # Set the cost without bG
+                cost = bestNode.current[visited[0]][nodesL[j]] + b
                 bestList.append(
-                    Node(adjList, cost, ))
+                    Node(adjList, cost, ))  # Append the node with its cost
 
             else:
-                minMax = redu(adjList)
+                minMax = redu(adjList)  # Else reduce it again
+                # Set bG to the cost from that reuctions
                 bG = np.sum(minMax[0] + minMax[1])
-                cost = bestNode[0].current[visited[0]][nodesL[j]] + b + bG
+                # Set the cost with bG
+                cost = bestNode.current[visited[0]][nodesL[j]] + b + bG
                 bestList.append(
-                    Node(adjList, cost))
+                    Node(adjList, cost))  # Append the node with its cost
         matrix = {}
         for bestL in bestList:
-            matrix[str(bestL.current)] = bestL
-        first = False
+            matrix[str(bestL.current)] = bestL  # Add the ndoes to matrix
+        first = False  # Set first iteration to false
 
 
 if __name__ == '__main__':
 
+    # Initialize graph with networkx
     G = nx.Graph()
 
     G.add_edge("A", "B")
@@ -156,6 +167,7 @@ if __name__ == '__main__':
 
     esmall = []
     for i in range(len(path)-1):
+        # esmall will be the dotted line of the path
         esmall.append((path[i], path[i+1]))
 
     # nodes
