@@ -52,7 +52,7 @@ def bestN(matrix):
     return best, ind
 
 
-def printPath(visited):
+def getPath(visited):
     path = []
     label = []
     for i in range(COL):
@@ -96,7 +96,7 @@ def main(start):
         visited = np.insert(visited, 0, nodesL[index])
         nodesL = (list(set(nodesL) - set(visited)))
         if(not nodesL):
-            path = printPath(visited)
+            path = getPath(visited)
             return path
         bestList = []
         for j in range(len(nodesL)):
@@ -163,9 +163,9 @@ if __name__ == '__main__':
     nx.draw_networkx_nodes(G, pos, node_size=700)
 
     # edges
-    nx.draw_networkx_edges(G, pos, width=6)
+    nx.draw_networkx_edges(G, pos, alpha=0.5, width=6)
     nx.draw_networkx_edges(
-        G, pos, edgelist=esmall, width=10, alpha=0.9, edge_color="r", style="dashed"
+        G, pos, edgelist=esmall, width=10, alpha=1, edge_color="r", style="dotted"
     )
 
     # labels
